@@ -11,7 +11,7 @@ Separate apps, buildpacks and procfiles for subdirectories in your monorepo.
 
 Example from the command line for monorepo with a `frontend` and `backend` app.
 
-**monorepo/backend** app (python)
+**backend** app (python)
 
 1. create the app, add the buildpack, and set the app directory environment variable
    ```bash
@@ -21,6 +21,7 @@ Example from the command line for monorepo with a `frontend` and `backend` app.
    ```
 2. create `Procfile-backend` and `.buildpack-backend` settings files in the root
    ```bash
+   # in monorepo root directory
    printf 'web: cd backend && gunicorn my.app:create_app\(\) -b 0.0.0.0:$PORT -w 1' > Procfile-backend
    printf "https://github.com/heroku/heroku-buildpack-python" > .buildpack-backend
    git add .
@@ -31,7 +32,7 @@ Example from the command line for monorepo with a `frontend` and `backend` app.
    git push https://git.heroku.com/myproject-backend.git master
    ```
 
-**monorepo/frontend** app (nodejs)
+**frontend** app (nodejs)
 
 1. create the app, add the buildpack, and set the app directory environment variable
    ```bash
@@ -41,6 +42,7 @@ Example from the command line for monorepo with a `frontend` and `backend` app.
    ```
 2. create `Procfile-frontend` and `.buildpack-frontend` settings files in the root
    ```bash
+   # in monorepo root directory
    printf "web: cd frontend && yarn start" > Procfile-frontend
    printf "https://github.com/heroku/heroku-buildpack-nodejs" > .buildpack-frontend
    git add .
