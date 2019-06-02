@@ -19,7 +19,7 @@ CACHE_DIR=$2
 ENV_DIR=$3
 
 # APP DIRECTORY
-APP_DIR=$(cat ${ENV_DIR}/HEROKU_APP_DIR)
+APP_DIR=$(cat $ENV_DIR/HEROKU_APP_DIR)
 
 if [[ -z "${APP_DIR}" ]]; then
     echo "Mono-apps: HEROKU_APP_DIR was not set. Aborting" | indent
@@ -27,7 +27,7 @@ if [[ -z "${APP_DIR}" ]]; then
 fi
 
 # CUSTOM PROCFILE
-cp ${BUILD_DIR}/Procfile-${APP_DIR} ${BUILD_DIR}/Procfile
+cp $BUILD_DIR/Procfile-$APP_DIR $BUILD_DIR/Procfile
 
 if ! [ $? ]; then
     echo "Mono-apps: FAILED to copy Procfile-${APP_DIR} -> /Procfile" | indent
@@ -37,7 +37,7 @@ fi
 echo "Mono-apps: Copied Procfile-${APP_DIR} -> /Procfile successfully" | indent
 
 # CUSTOM BUILDPACK
-BUILDPACK=$(< .buildpack-$APP_DIR)
+BUILDPACK=$(< $BUILD_DIR/.buildpack-$APP_DIR)
 
 if ! [ $? ]; then
     echo "Mono-apps: FAILED to find .buildpack-${APP_DIR}" | indent
