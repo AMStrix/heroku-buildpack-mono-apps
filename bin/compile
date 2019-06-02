@@ -19,10 +19,10 @@ CACHE_DIR=$2
 ENV_DIR=$3
 
 # APP DIRECTORY
-APP_DIR=$(cat $ENV_DIR/HEROKU_APP_DIR)
+APP_DIR=$(cat $ENV_DIR/APP_DIR_HEROKU)
 
 if [[ -z "${APP_DIR}" ]]; then
-    echo "Mono-apps: HEROKU_APP_DIR was not set. Aborting" | indent
+    echo "Mono-apps: APP_DIR_HEROKU was not set. Aborting" | indent
     exit 1
 fi
 

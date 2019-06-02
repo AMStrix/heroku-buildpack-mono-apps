@@ -16,7 +16,7 @@ Example from the command line for monorepo with a `frontend` and `backend` app.
    ```bash
    heroku create -a myproject-backend
    heroku buildpacks:add -a myproject-backend https://github.com/AMStrix/heroku-buildpack-mono-apps
-   heroku config:set -a myproject-backend HEROKU_APP_DIR=backend
+   heroku config:set -a myproject-backend APP_DIR_HEROKU=backend
    ```
 2. create `Procfile-backend` and `.buildpack-backend` settings files in the root
    ```bash
@@ -33,7 +33,7 @@ Example from the command line for monorepo with a `frontend` and `backend` app.
    ```bash
    heroku create -a myproject-frontend
    heroku buildpacks:add -a myproject-frontend https://github.com/AMStrix/heroku-buildpack-mono-apps
-   heroku config:set -a myproject-frontend HEROKU_APP_DIR=frontend
+   heroku config:set -a myproject-frontend APP_DIR_HEROKU=frontend
    ```
 2. create `Procfile-frontend` and `.buildpack-frontend` settings files in the root
    ```bash
