@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+
+set -e
+
+function indent() {
+  c='s/^/       /'
+  case $(uname) in
+    Darwin) sed -l "$c";;
+    *)      sed -u "$c";;
+  esac
+}
+
+unset GIT_DIR
+
+
+
+BUILD_DIR=$1
+CACHE_DIR=$2
+ENV_DIR=$3
+
+# APP DIRECTORY
+APP_DIR=$(cat ${ENV_DIR}/APP_DIR)
+
+if [[ -z "${APP_DIR}" ]]; then
+    echo "Mono-apps: APP_DIR was not set. Aborting" | indent
+    exit 1
+fi
+
+# CUSTOM PROCFILE
+cp ${BUILD_DIR}/Procfile-${APP_DIR} ${BUILD_DIR}/Procfile
+
+if ! [ $? ]; then
+    echo "Mono-apps: FAILED to copy Procfile-${APP_DIR} -> /Procfile" | indent
+    exit 1
+fi
+
+echo "Mono-apps: Copied Procfile-${APP_DIR} -> /Procfile successfully" | indent
+
+# CUSTOM BUILDPACK
+BUILDPACK=$(< .buildpack-$APP_DIR)
+
+if ! [ $? ]; then
+    echo "Mono-apps: FAILED to find .buildpack-${APP_DIR}" | indent
+    exit 1
+fi
+if [[ -z "${BUILDPACK}" ]]; then
+    echo "Mono-apps: Nothing found in .buildpack-${APP_DIR}. Aborting" | indent
+    exit 1
+fi
+
+dir=$(mktemp -t buildpackXXXXX)
+rm -rf $dir
+
+subdir=$APP_DIR
+
+url=${BUILDPACK%#*}
+branch=${BUILDPACK#*#}
+
+if [ "$branch" == "$url" ]; then
+  branch=""
+fi
+
+if [ "$url" != "" ]; then
+  echo "Mono-apps: =====> Downloading Buildpack: $url, branch: $branch, to tmp dir $dir, against source's subdir: $subdir"
+
+  if [[ "$url" =~ \.tgz$ ]] || [[ "$url" =~ \.tgz\? ]]; then
+    mkdir -p "$dir"
+    curl -s "$url" | tar xvz -C "$dir" >/dev/null 2>&1
+  else
+    git clone $url $dir >/dev/null 2>&1
+    if [ -f "$dir/.gitmodules" ]; then
+      echo "Mono-apps: =====> Detected git submodules. Initializing..."
+      (cd $dir && git submodule update --init --recursive)
+    fi
+  fi
+  cd $dir
+
+  if [ "$branch" != "" ]; then
+    git checkout $branch >/dev/null 2>&1
+  fi
+
+  # Ensure that these files exist.
+  chmod -f +x $dir/bin/{detect,compile,release} || true
+
+  framework=$($dir/bin/detect $1/$subdir)
+
+  if [ $? == 0 ]; then
+    echo "Mono-apps: =====> Detected Framework: $framework"
+    $dir/bin/compile $1/$subdir $2/services/$subdir $3
+
+    if [ $? != 0 ]; then
+      exit 1
+    fi
+
+    # check if the buildpack left behind an environment for subsequent ones
+    if [ -e $dir/export ]; then
+      source $dir/export
+    fi
+
+    if [ ! -z $subdir ]; then
+      # check if the buildpack left any executables behind
+      if [ -d $1/$subdir/.heroku ]; then
+        mkdir -p $1/.heroku
+        cp -R $1/$subdir/.heroku/* $1/.heroku
+      fi
+
+      # check if the buildpack left any .profile.d scripts behind
+      if [ -d $1/$subdir/.profile.d ]; then
+        mkdir -p $1/.profile.d
+        cp -R $1/$subdir/.profile.d/* $1/.profile.d
+      fi
+    fi
+
+    if [ -x $dir/bin/release ]; then
+      $dir/bin/release $1/$subdir > $1/$subdir/last_pack_release.out
+    fi
+  else
+    echo "Mono-apps: ${BUILDPACK} did not detect a compatible framework in /${subdir}. Exiting."
+    exit 1
+  fi
+fi
+
+
+if [[ -e $1/last_pack_release.out ]]; then
+  echo "Mono-apps: Using release configuration from last framework ($framework)."
+fi

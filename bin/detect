@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+echo "Mono-apps"
+exit 0
